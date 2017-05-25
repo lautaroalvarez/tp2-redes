@@ -1,0 +1,7 @@
+ideas para los experimentos
+-usar un/a proxy/vpn para forzar que pase por un lugar. se puede usar para tener en cuenta el camino desde ese pais hasta una universidad o para comparar el camino de ida y el de vuelta.
+-buscar caminos antiintuitivos (paginas hosteadas en arg pero que para acceder van a otros paises)
+-ver la alta latencia entre que hay para llegar a china/norcorea a comparacion de sus paises limitrofes. sirve para romper el algoritmo de deteccion de saltos intercontinentales
+-tomar como origen varios puntos del mismo pais y ver si todos salen por el mismo cable.
+-similar al anterior pero variando el destino dentro del mismo pais
+-pegarle a un lugar al que se puede acceder sin saltos intercontinentales directos (centroamerica desde argentina por ejemplo) y ver si prefiere ir por agua o por tierra
