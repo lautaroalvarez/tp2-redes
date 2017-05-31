@@ -1,5 +1,6 @@
 from scapy.all import *
-import os, sys, time, csv, geoip2.webservice
+import os, sys, time, csv
+import json, requests
 
 CANT_REP = 5
 MAX_INTENTOS = 5
@@ -12,15 +13,13 @@ LINEA_CIUDAD = 484
 LINEA_LATITUD = 501
 LINEA_LONGITUD =506
 
-def dameLinea(numLinea):
-    return os.popen("head -n"+str(numLinea)+" dummy | tail -n1 | sed 's/<span>//g' | sed 's/<\/span>//g' | sed 's/\t//g'").read()[:-1]
-
 # Recibe un string con la ip/url de destino y un ttl maximo del paquete (para que el algortimo termine)
 def traceroute(destino, ttlMaximo, outfile):
     route = []
-    if outfile:
-        logger = csv.writer(open(outfile + ".csv", "wb"))
-        logger.writerow(["orden","ip","num_rep","pais","region","ciudad","latitud","longitud"])
+    if not outfile:
+        outfile = "salida" + str(time.time())
+    logger = csv.writer(open(outfile + ".csv", "wb"))
+    logger.writerow(["orden","ip","num_rep","pais","region","ciudad","latitud","longitud"])
 
     ttlActual = 1
     fin = 0
@@ -32,7 +31,6 @@ def traceroute(destino, ttlMaximo, outfile):
         num_rep = 0
         num_intentos = 0
         while num_rep < CANT_REP and num_intentos < MAX_INTENTOS and not fin:
-            print "-----------------------"
             print "----ttl: " + str(ttlActual) + " - num_rep: " + str(num_rep) + " - num_intentos: " + str(num_intentos)
             # arma el paquete con el ttl incluido
             paquete = IP(dst=destino,ttl=ttlActual)/ICMP()
@@ -45,13 +43,11 @@ def traceroute(destino, ttlMaximo, outfile):
                 # analizo response
                 # si la ip es la misma que un ttl anterior, entonces ya llegue al final
                 if last_ip == response.src:
-                    print "========================REPITE LAST IP!!========================="
-                    fin = 1
+                    print "========================REPITE IP================="
+                    # fin = 1
                 else:
-                    print "type: " + str(response[ICMP].type)
-                    print "host: " + str(response.src)
+                    print "contacto host: " + str(response.src)
                     if response[ICMP].type == TYPE_TIMEEXCEDED or response[ICMP].type == TYPE_LASTNODE:
-                        print "se guarda ok"
                         # fue time exceded
                         # guarda ip del host al que llego
                         host['ip'] = response.src
@@ -67,22 +63,30 @@ def traceroute(destino, ttlMaximo, outfile):
         ttlActual += 1
 
     for host in route:
-        if host['ip'][:7] == "192.168" or host['ip'][:3] == "10." or host['ip'][:7] == "192.16." or host['ip'][:7] == "169.254":
-            # si es de red interna le digo a la pagina que me rastree
-            os.system("wget -O dummy https://geoiptool.com/")
-        else:
-            # si el equipo es externo traigo datos de geolocalizacion poniendo la ip
-            os.system("wget -O dummy https://geoiptool.com/es/?ip="+host['ip'])
-        pais = dameLinea(LINEA_PAIS)
-        region = dameLinea(LINEA_REGION)
-        ciudad = dameLinea(LINEA_CIUDAD)
-        latitud = dameLinea(LINEA_LATITUD)
-        longitud = dameLinea(LINEA_LONGITUD)
-        if outfile:
-            for rtt in host['tiempos']:
-                logger.writerow([host['ttl'], host['ip'], rtt, pais, region, ciudad, latitud, longitud])
-    # borro el archivo que baje
-    os.system("rm dummy*")
+        # si es de red interna le digo a la pagina que me rastree
+        pais = ""
+        region = ""
+        ciudad = ""
+        latitud = ""
+        longitud = ""
+        respok = 0
+        intentos_geo = 0
+        while not respok and intentos_geo < 10:
+            response = requests.get("http://freegeoip.net/json/" + str(host['ip']))
+            if response.status_code == 200:
+                # parsea el json de respuesta de la api
+                infoip = json.loads(response.content)
+                # se guarda los datos necesarios
+                pais = infoip['country_name'].encode('utf-8')
+                region = infoip['region_name'].encode('utf-8')
+                ciudad = infoip['city'].encode('utf-8')
+                latitud = infoip['latitude']
+                longitud = infoip['longitude']
+                # setea que recibe los datos ok
+                respok = 1
+            intentos_geo += 1
+        for rtt in host['tiempos']:
+            logger.writerow([host['ttl'], host['ip'], rtt, pais, region, ciudad, latitud, longitud])
 
 if os.geteuid() != 0:
     print "Correlo con root chabon!"
@@ -90,5 +94,5 @@ if os.geteuid() != 0:
 
 host = raw_input("Pone la ip/url: ")
 ttlMax = int(raw_input("Pone el ttl maximo: "))
-outfile = raw_input("Pone el archivo de salida de logs (ENTER: sin log): ")
+outfile = raw_input("Pone el archivo de salida de logs: ")
 traceroute(host, ttlMax, outfile)
