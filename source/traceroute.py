@@ -92,7 +92,12 @@ if os.geteuid() != 0:
     print "Correlo con root chabon!"
     exit(1)
 
-host = raw_input("Pone la ip/url: ")
-ttlMax = int(raw_input("Pone el ttl maximo: "))
-outfile = raw_input("Pone el archivo de salida de logs: ")
+if len(sys.argv) > 3:
+    host = sys.argv[1]
+    ttlMax = sys.argv[2]
+    outfile = sys.argv[3]
+else:
+    host = raw_input("Pone la ip/url: ")
+    ttlMax = int(raw_input("Pone el ttl maximo: "))
+    outfile = raw_input("Pone el archivo de salida de logs: ")
 traceroute(host, ttlMax, outfile)
