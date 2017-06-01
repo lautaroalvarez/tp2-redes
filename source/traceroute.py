@@ -1,6 +1,7 @@
 from scapy.all import *
 import os, sys, time, csv
 import json, requests
+import numpy as np
 
 CANT_REP = 5
 MAX_INTENTOS = 5
@@ -62,6 +63,8 @@ def traceroute(destino, ttlMaximo, outfile):
             route.append(host)
         ttlActual += 1
 
+    ej1 = True
+    arrayIP_RTT = []
     for host in route:
         # si es de red interna le digo a la pagina que me rastree
         pais = ""
@@ -85,8 +88,46 @@ def traceroute(destino, ttlMaximo, outfile):
                 # setea que recibe los datos ok
                 respok = 1
             intentos_geo += 1
-        for rtt in host['tiempos']:
-            logger.writerow([host['ttl'], host['ip'], rtt, pais, region, ciudad, latitud, longitud])
+        if ej1:
+            for rtt in host['tiempos']:
+                logger.writerow([host['ttl'], host['ip'], rtt, pais, region, ciudad, latitud, longitud])
+        else:
+            tiempos = np.array(host['tiempos'])
+            arrayIP_RTT.append((host,np.mean(tiempos)))
+
+    if not ej1: # cimbala
+        # paso 0
+        cantidad = len(arrayIP_RTT)
+        # paso 1
+        arrayIP_RTT_sorted = arrayIP_RTT[arrayIP_RTT[:,1].argsort()]
+        candidatoMin = arrayIP_RTT_sorted[0]
+        candidatoMax = arrayIP_RTT_sorted[len(arrayIP_RTT_sorted)-1]
+        # paso 2
+        np_rtt = np.array([])
+        for par in arrayIP_RTT:
+            rtt = par[1]
+            np_rtt.append(rtt)
+        media = np.mean(np_rtt)
+        stdev = np.stdev(np_rtt)
+        # paso 3
+        desviacion_menorRTT = abs(candidatoMin[1]-media)
+        # paso 4
+        desviacion_mayorRTT = abs(candidatoMax[1]-media)
+        # paso 5
+        mayor = True
+        if desviacion_mayorRTT < desviacion_menorRTT: # manganeta para tener cual es la ip a la hora de reportarla
+            masSospechoso = desviacion_menorRTT
+            mayor = False
+        else:
+            masSospechoso = desviacion_mayorRTT
+        # paso 6
+        # TODO: hardcodear la tabla o calcularla si estamos con tiempos
+        thompson = raw_input("Dame el thompson modificado con n="+str(cantidad))
+        # paso 7
+        valorCritico = thompson*stdev
+        # paso 8
+        if valorCritico < masSospechoso:
+            print "Para llegar a la ip "+(candidatoMin[0] if mayor else candidatoMax[0])+" hay un salto intercontinental"
 
 if os.geteuid() != 0:
     print "Correlo con root chabon!"
