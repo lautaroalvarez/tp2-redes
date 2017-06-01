@@ -3,16 +3,11 @@ import os, sys, time, csv
 import json, requests
 import numpy as np
 
-CANT_REP = 5
+CANT_REP = 30
 MAX_INTENTOS = 5
 TIME_LIMIT = 3
 TYPE_TIMEEXCEDED = 11
 TYPE_LASTNODE = 0
-LINEA_PAIS = 468
-LINEA_REGION = 479
-LINEA_CIUDAD = 484
-LINEA_LATITUD = 501
-LINEA_LONGITUD =506
 
 # Recibe un string con la ip/url de destino y un ttl maximo del paquete (para que el algortimo termine)
 def traceroute(destino, ttlMaximo, outfile):
