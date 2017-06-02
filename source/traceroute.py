@@ -58,7 +58,7 @@ def traceroute(destino, ttlMaximo, outfile):
             route.append(host)
         ttlActual += 1
 
-    ej1 = True
+    ej1 = False
     arrayIP_RTT = []
     for host in route:
         # si es de red interna le digo a la pagina que me rastree
@@ -88,22 +88,31 @@ def traceroute(destino, ttlMaximo, outfile):
                 logger.writerow([host['ttl'], host['ip'], rtt, pais, region, ciudad, latitud, longitud])
         else:
             tiempos = np.array(host['tiempos'])
-            arrayIP_RTT.append((host,np.mean(tiempos)))
+            arrayIP_RTT.append((host['ip'],np.mean(tiempos)))
 
     if not ej1: # cimbala
+        print arrayIP_RTT
+        for i in range(1,len(arrayIP_RTT)): # calculo cuanto tardo en ese tramo
+            arrayIP_RTT[i] = (arrayIP_RTT[i][0],arrayIP_RTT[i][1]-arrayIP_RTT[i-1][1])
         # paso 0
         cantidad = len(arrayIP_RTT)
+        print cantidad
         # paso 1
-        arrayIP_RTT_sorted = arrayIP_RTT[arrayIP_RTT[:,1].argsort()]
+        arrayIP_RTT_sorted = sorted(arrayIP_RTT,key=lambda x: x[1])
         candidatoMin = arrayIP_RTT_sorted[0]
         candidatoMax = arrayIP_RTT_sorted[len(arrayIP_RTT_sorted)-1]
+        print candidatoMin
+        print candidatoMax
         # paso 2
-        np_rtt = np.array([])
+        np_rtt = []
         for par in arrayIP_RTT:
             rtt = par[1]
             np_rtt.append(rtt)
+        np_rtt = np.array(np_rtt)
         media = np.mean(np_rtt)
-        stdev = np.stdev(np_rtt)
+        stdev = np.std(np_rtt)
+        print media
+        print stdev
         # paso 3
         desviacion_menorRTT = abs(candidatoMin[1]-media)
         # paso 4
@@ -115,11 +124,13 @@ def traceroute(destino, ttlMaximo, outfile):
             mayor = False
         else:
             masSospechoso = desviacion_mayorRTT
+        print masSospechoso
         # paso 6
         # TODO: hardcodear la tabla o calcularla si estamos con tiempos
         thompson = raw_input("Dame el thompson modificado con n="+str(cantidad))
         # paso 7
         valorCritico = thompson*stdev
+        print valorCritico
         # paso 8
         if valorCritico < masSospechoso:
             print "Para llegar a la ip "+(candidatoMin[0] if mayor else candidatoMax[0])+" hay un salto intercontinental"
