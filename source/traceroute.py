@@ -33,10 +33,10 @@ class traceroute():
             host['ttl'] = self.ttlActual
             self.numRep = 0
             numIntento = 0
+            # arma el paquete con el ttl incluido
+            paquete = IP(dst=self.destino,ttl=self.ttlActual)/ICMP()
             while self.numRep < CANT_REP and numIntento < MAX_INTENTOS:
                 self.actualizarVistaProceso()
-                # arma el paquete con el ttl incluido
-                paquete = IP(dst=self.destino,ttl=self.ttlActual)/ICMP()
                 # hago un echo request o ping para los pibes
                 start_time = time.time()
                 response = sr1(paquete, timeout=TIME_LIMIT)
