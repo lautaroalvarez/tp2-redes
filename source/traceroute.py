@@ -3,7 +3,7 @@ import os, sys, time, csv
 import json, requests
 import numpy as np
 
-CANT_REP = 3
+CANT_REP = 50
 MAX_INTENTOS = 2
 TIME_LIMIT = 3
 TYPE_TIMEEXCEDED = 11
@@ -53,7 +53,7 @@ def traceroute(destino, outfile):
             route.append(host)
         ttlActual += 1
 
-    ej1 = True
+    ej1 = False
     arrayIP_RTT = []
     for host in route:
         # si es de red interna le digo a la pagina que me rastree
@@ -122,7 +122,7 @@ def traceroute(destino, outfile):
         print masSospechoso
         # paso 6
         # TODO: hardcodear la tabla o calcularla si estamos con tiempos
-        thompson = raw_input("Dame el thompson modificado con n="+str(cantidad))
+        thompson = int(raw_input("Dame el thompson modificado con n="+str(cantidad)))
         # paso 7
         valorCritico = thompson*stdev
         print valorCritico
