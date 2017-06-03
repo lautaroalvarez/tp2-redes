@@ -122,7 +122,7 @@ def traceroute(destino, outfile):
         print masSospechoso
         # paso 6
         # TODO: hardcodear la tabla o calcularla si estamos con tiempos
-        thompson = int(raw_input("Dame el thompson modificado con n="+str(cantidad)))
+        thompson = float(raw_input("Dame el thompson modificado con n="+str(cantidad)))
         # paso 7
         valorCritico = thompson*stdev
         print valorCritico
