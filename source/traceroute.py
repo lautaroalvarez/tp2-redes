@@ -22,7 +22,7 @@ class traceroute():
         self.numIntento = 0
 
     def iniciar(self):
-        self.loggerRoute = csv.writer(open(self.namefile + "_route.csv", "wb"))
+        self.loggerRoute = csv.writer(open(self.namefile + ".csv", "wb"))
         self.loggerRoute.writerow(["ttl","ip","rtt","pais","region","ciudad","latitud","longitud"])
         self.ttlActual = 1
         fin_camino = False
@@ -92,7 +92,7 @@ class traceroute():
     def estadoDesdeCsv(self, namefile):
         self.route = []
         self.namefile = namefile
-        with open(self.namefile + '_route.csv', 'rb') as archivocsv:
+        with open(self.namefile + '.csv', 'rb') as archivocsv:
             lector = csv.reader(archivocsv)
             self.ttlActual = -1
             ip_actual = -1
@@ -175,8 +175,10 @@ class traceroute():
         else:
             print "No hay salto intercontinental"
 
-def promediarRtts(arregloRtt):
-    return np.mean(np.array(arregloRtt))
+def promediarRtts(lista):
+    listaOrdenada = np.sort(np.array(lista))
+    listaOrdenada = np.delete(listaOrdenada, [0, listaOrdenada.shape[0]-1])
+    return np.mean(listaOrdenada)
 
 if os.geteuid() != 0:
     print "Correlo con root chabon!"
