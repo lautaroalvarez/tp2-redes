@@ -9,9 +9,10 @@ TIME_LIMIT = 3
 NODES_LIMIT = 30
 TYPE_TIMEEXCEDED = 11
 TYPE_LASTNODE = 0
+LISTA_TAU = [0, 0, 0, 1.1511, 1.4250, 1.5712, 1.6563, 1.7110, 1.7491, 1.7770, 1.7984, 1.8153, 1.8290, 1.8403, 1.8498, 1.8579, 1.8649, 1.8710, 1.8764, 1.8811, 1.8853, 1.8891, 1.8926, 1.8957, 1.8985, 1.9011, 1.9035, 1.9057, 1.9078, 1.9096, 1.9114]
 
-# Recibe un string con la ip/url de destino y un archivo de salida
 class traceroute():
+    # Recibe un string con la ip/url de destino y un archivo de salida
     def __init__(self, destino, namefile):
         if not namefile:
             namefile = str(time.time())
@@ -164,8 +165,7 @@ class traceroute():
             masSospechoso = desviacion_mayorRTT
         print masSospechoso
         # paso 6
-        # TODO: hardcodear la tabla o calcularla si estamos con tiempos
-        thompson = raw_input("Dame el thompson modificado con n="+str(cantidad_nodos))
+        thompson = LISTA_TAU[cantidad_nodos]
         # paso 7
         valorCritico = float(thompson) * stdev
         print valorCritico
