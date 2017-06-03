@@ -4,7 +4,7 @@ import json, requests
 import numpy as np
 
 CANT_REP = 50
-MAX_INTENTOS = 3
+MAX_INTENTOS = 4
 TIME_LIMIT = 3
 NODES_LIMIT = 30
 TYPE_TIMEEXCEDED = 11
@@ -111,6 +111,11 @@ class traceroute():
                         host['tiempos'] = []
                         host['ttl'] = self.ttlActual
                         host['ip'] = linea[1]
+                        host['pais'] = linea[3]
+                        host['region'] = linea[4]
+                        host['ciudad'] = linea[5]
+                        host['latitud'] = linea[6]
+                        host['longitud'] = linea[7]
                     host['tiempos'].append(float(linea[2]))
             self.route.append(host)
             self.actualizarVistaProceso()
@@ -125,6 +130,16 @@ class traceroute():
         print ""
         for host in self.route:
             print str(host['ttl']) + " -> " + host['ip'] + " - " + str(promediarRtts(host['tiempos']))
+        print ""
+
+    def mostrarVistaResultado(self):
+        os.system('clear')
+        print "-------------CAMINO OBTENIDO-------------"
+        print ""
+        for host in self.route:
+            if host['es_salto']:
+                print "...Salto Intercontinental..."
+            print str(host['ttl']) + " -> " + host['ip'] + " (" + host['pais'] + ")" + " - " + str(host['rtt_salto'])
         print ""
 
     def calcularOutliers(self):
@@ -175,6 +190,25 @@ class traceroute():
         else:
             print "No hay salto intercontinental"
 
+    def calcularOutliers2(self):
+        rtts = []
+        rtt_ultimo_nodo = 0
+        # calcula rtt por salto y los agrega a una lista para calcular promedio y std
+        for host in self.route:
+            rtt_promedio = promediarRtts(host['tiempos'])
+            host['rtt_salto'] = rtt_promedio - rtt_ultimo_nodo
+            rtt_ultimo_nodo = rtt_promedio
+            rtts.append(host['rtt_salto'])
+        # calcula promedio y std
+        promedio = np.mean(np.array(rtts))
+        std = np.std(np.array(rtts))
+        # recorre los nodos y verifica si son outliers
+        for host in self.route:
+            value = abs(host['rtt_salto'] - promedio) / std
+            host['es_salto'] = (value > LISTA_TAU[len(self.route)])
+        # muestra resultados en pantalla
+        self.mostrarVistaResultado()
+
 def promediarRtts(lista):
     listaOrdenada = np.sort(np.array(lista))
     listaOrdenada = np.delete(listaOrdenada, [0, listaOrdenada.shape[0]-1])
@@ -217,6 +251,6 @@ def main():
             namefile = raw_input("Pone el nombre del archivo de entrada: ")
         tr = traceroute('', '')
         tr.estadoDesdeCsv(namefile)
-        tr.calcularOutliers()
+        tr.calcularOutliers2()
 
 main()
