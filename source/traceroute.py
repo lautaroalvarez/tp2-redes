@@ -195,17 +195,39 @@ class traceroute():
         rtt_ultimo_nodo = 0
         # calcula rtt por salto y los agrega a una lista para calcular promedio y std
         for host in self.route:
+            host['es_salto'] = False
             rtt_promedio = promediarRtts(host['tiempos'])
             host['rtt_salto'] = rtt_promedio - rtt_ultimo_nodo
             rtt_ultimo_nodo = rtt_promedio
-            rtts.append(host['rtt_salto'])
-        # calcula promedio y std
-        promedio = np.mean(np.array(rtts))
-        std = np.std(np.array(rtts))
-        # recorre los nodos y verifica si son outliers
-        for host in self.route:
-            value = abs(host['rtt_salto'] - promedio) / std
-            host['es_salto'] = (value > LISTA_TAU[len(self.route)])
+            rtts.append((host['ip'], host['rtt_salto']))
+
+        # ordena por rtt de salto
+        rtts = sorted(rtts, key=lambda x: x[1])
+
+        hay_outlier = True
+        while hay_outlier:
+            hay_outlier = False
+            # calcula promedio y std
+            np_rtt = []
+            for par in rtts:
+                rtt = par[1]
+                np_rtt.append(rtt)
+            np_rtt = np.array(np_rtt)
+            promedio = np.mean(np_rtt)
+            std = np.std(np_rtt)
+            # tomamos el rtt mas alto (candidato)
+            candidato = rtts[-1]
+            # recorre los nodos y verifica si son outliers
+            i = 0
+            while i < len(self.route) and self.route[i]['ip'] != candidato[0]:
+                i += 1
+            if i < len(self.route):
+                value = abs(self.route[i]['rtt_salto'] - promedio) / std
+                if value > LISTA_TAU[len(rtts)]:
+                    self.route[i]['es_salto'] = True
+                    rtts.pop()
+                    hay_outlier = True
+
         # muestra resultados en pantalla
         self.mostrarVistaResultado()
 
