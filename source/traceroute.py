@@ -218,7 +218,7 @@ class traceroute():
             # tomamos el rtt mas alto (candidato)
             candidato = rtts[-1]
             # recorre los nodos y verifica si son outliers
-            i = 0
+            i = 1 
             while i < len(self.route) and self.route[i]['ip'] != candidato[0]:
                 i += 1
             if i < len(self.route):
