@@ -9,17 +9,11 @@
 
 \begin{figure}[ht]
   \begin{subfigure}[b]{.5\textwidth}
-    \hspace*{-1.5cm}
-    \includegraphics[width=1.2\textwidth]{Imagenes/capetown_rtts.png}
+    \includegraphics[width=\textwidth]{Imagenes/capetown_rtts.png}
   \end{subfigure}
   \label{fig:capetown_rtts}
   \caption{Tiempo del salto entre cada nodo y su nodo previo, para cada nodo identificado en el camino al host uct.ac.za}
 \end{figure}
-
-\par En la figura \ref{fig:capetown_rtts} podemos ver el listado de nodos identificados en el camino al host destino y la comparación de los rtt promedio entre cada salto. Para cada nodo, se muestra el tiempo (promediado en segundos) que se tardó en llegar desde el nodo previo hasta él. Este valor se calcula tomando el tiempo que se tardó en llegar al nodo actual y restándole el mismo valor, pero del nodo previo.
-\par Podemos ver que algunos valores de RTT resultan negativos. Esto se lo adjudicamos al hecho de que al recibir un paquete con ttl=0 algunos nodos tardan en enviar el paquete de respuesta (\textit{time exceded}), ya sea por restarle prioridad o por algún tema de procesamiento interno.
-\par Otro dato importante que se observa de los resultados es que no se obtuvo respuesta del nodo correspiendiente al ttl=4. Creemos que esto se debe a que algunos nodos se encuentran configurados para no responder mensajes ICMP. En base a esto, tuvimos que tomar la determinación de ignorar los nodos que no respondan y suponer que los nodos previo y posterior se encuentran unidos. Esto influye fuértemente en el cálculo del tiempo de los saltos entre los nodos, ya que algunos saltos contienen en verdad algún nodo interno, el cual puede agregar tiempo.
-\par Con los valores de RTT obtenidos, se ejecutó un algoritmo basado la técnica de estimación de outliers propuesta por Cimbala para tratar de predecir saltos intercontinentales. El algoritmo se aplicó iterativamente hasta que se concluye que no hay mas outliers, según el criterio mencionado por John Cimbala\footnote{Outliers: http://www.mne.psu.edu/cimbala/me345/Lectures/Outliers.pdf}. De esta manera, en la figura \ref{fig:capetown_list} se pueden observar los outliers obtenidos por el algoritmo (resaltados en azul)
 
 \begin{figure*}[ht]
   \hspace*{-0.4cm}
@@ -64,7 +58,13 @@
       \hline
     \end{tabular}
     \label{fig:capetown_list}
-    \caption{Listado de nodos: TTL, IP y país.}
+    \caption{Listado de nodos: TTL, IP y país. Se encuentran resaltados los destinos de los saltos intercontinentales.}
   \end{subfigure}
   \caption{Nodos pertenecientes al camino al host uct.ac.za.}
 \end{figure*}
+
+\par En la figura \ref{fig:capetown_rtts} podemos ver el listado de nodos identificados en el camino al host destino y la comparación de los rtt promedio entre cada salto. Para cada nodo, se muestra el tiempo (promediado en segundos) que se tardó en llegar desde el nodo previo hasta él. Este valor se calcula tomando el tiempo que se tardó en llegar al nodo actual y restándole el mismo valor, pero del nodo previo.
+\par Podemos ver que algunos valores de RTT resultan negativos. Esto se lo adjudicamos al hecho de que al recibir un paquete con ttl=0 algunos nodos tardan en enviar el paquete de respuesta (\textit{time exceded}), ya sea por restarle prioridad o por algún tema de procesamiento interno. De esta manera, la respuesta del nodo siguiente tal vez tarde menos y nos quede un valor negativo.
+\par Otro dato importante que se observa de los resultados es que no se obtuvo respuesta del nodo correspiendiente al ttl=4. Creemos que esto se debe a que algunos nodos se encuentran configurados para no responder mensajes ICMP. En base a esto, tuvimos que tomar la determinación de ignorar los nodos que no respondan y suponer que los nodos previo y posterior se encuentran unidos. Esto influye fuértemente en el cálculo del tiempo de los saltos entre los nodos, ya que algunos saltos contienen en verdad algún nodo interno, el cual puede agregar tiempo.
+\par Con los valores de RTT obtenidos, se ejecutó un algoritmo basado en la técnica de estimación de outliers propuesta por John Cimbala\footnote{Outliers - John Cimbala: http://www.mne.psu.edu/cimbala/me345/Lectures/Outliers.pdf} para tratar de predecir saltos intercontinentales. En nuestro caso, solo nos interesan los outliers superiores (con mayor RTT), por lo que nuestro único candidato será el salto con mayor tiempo. El algoritmo se aplicó iterativamente hasta que se concluye que no hay mas outliers, según el criterio mencionado por John Cimbala. De esta manera, en la figura \ref{fig:capetown_list} se pueden observar los 6 outliers obtenidos por el algoritmo (resaltados en azul), dos de los cuales se corresponden a un salto intercontinental: \textit{España - Estados Unidos} y \textit{Reino Unido - Sudafrica}. Los otros 4 outliers detectados no se corresponden con saltos intercontinentales, pero si observamos el gráfico de la figura \ref{fig:capetown_rtts} podemos corroborar a simple vista que son claramente valores por fuera de lo normal. Volviendo al listado de nodos, vemos que hay 2 saltos intercontinentales que no fueron detectados: \textit{Argentina - España} y \textit{Estados Unidos - Reino Unido}.
+\par Podemos concluir que al momento de detectar outliers experimentamos 2 falsos negativos y 4 falsos positivos sobre 6 resultados obtenidos.
