@@ -49,7 +49,7 @@ class graficador():
         ips = []
         rtts = []
         for host in self.route:
-            ips.append(host['ip'])
+            ips.append(host['ip'] + " [ttl: " + str(host['ttl']) + "]")
             rtts.append(host['rtt_salto'])
 
         fig, ax = plt.subplots()
@@ -57,11 +57,13 @@ class graficador():
         ax.set_ylim([-1, len(ips)])
         ax.barh(np.arange(len(ips)), rtts, align='center')
         ax.set_yticks(np.arange(len(ips)))
-        ax.set_yticklabels(ips)
+        ax.set_yticklabels(ips, fontsize=17)
         ax.invert_yaxis()
-        ax.set_xlabel('RTT promedio del salto')
-        ax.set_title('Nodos de la ruta obtenida')
+        ax.set_xlabel('RTT promedio del salto', fontsize=14)
+        ax.set_title('Nodos de la ruta obtenida', fontsize=16)
         sns.set_style("darkgrid")
+        box = ax.get_position()
+        ax.set_position([0.35, box.y0, box.width - 0.15, box.height])
         plt.show()
 
     def gRttVsCimbala(self):
@@ -87,6 +89,71 @@ class graficador():
         ax.plot([LISTA_TAU[len(ips)], LISTA_TAU[len(ips)]], [-1, len(ips)], "r--")
         plt.show()
 
+    def gRttVsCimbalaRecursivo(self):
+        rtts = []
+        rtt_ultimo_nodo = 0
+        # calcula rtt por salto y los agrega a una lista para calcular promedio y std
+        for host in self.route:
+            host['es_salto'] = False
+            rtt_promedio = promediarRtts(host['tiempos'])
+            host['rtt_salto'] = rtt_promedio - rtt_ultimo_nodo
+            rtt_ultimo_nodo = rtt_promedio
+            rtts.append((host['ip'], host['rtt_salto']))
+
+        # ordena por rtt de salto
+        rtts = sorted(rtts, key=lambda x: x[1])
+
+        ultimo_tau = 0
+        promedio = 0
+        std = 0
+        hay_outlier = True
+        while hay_outlier:
+            hay_outlier = False
+            # calcula promedio y std
+            np_rtt = []
+            for par in rtts:
+                rtt = par[1]
+                np_rtt.append(rtt)
+            np_rtt = np.array(np_rtt)
+            promedio = np.mean(np_rtt)
+            std = np.std(np_rtt)
+            # tomamos el rtt mas alto (candidato)
+            candidato = rtts[-1]
+            # recorre los nodos y verifica si son outliers
+            i = 0
+            while i < len(self.route) and self.route[i]['ip'] != candidato[0]:
+                i += 1
+            if i < len(self.route):
+                value = abs(self.route[i]['rtt_salto'] - promedio) / std
+                ultimo_tau = LISTA_TAU[len(rtts)]
+                if value > ultimo_tau:
+                    self.route[i]['valor'] = value
+                    self.route[i]['es_salto'] = True
+                    rtts.pop()
+                    hay_outlier = True
+
+        ips = []
+        values = []
+        for host in self.route:
+            ips.append(host['ip'])
+            if host['es_salto']:
+                values.append(host['valor'])
+            else:
+                values.append(abs(host['rtt_salto'] - promedio) / std)
+
+        fig, ax = plt.subplots()
+        ax.barh(np.arange(len(ips)), values, align='center')
+        ax.set_yticks(np.arange(len(ips)))
+        ax.set_yticklabels(ips)
+        ax.invert_yaxis()
+        ax.set_xlabel('Pone aca algo copado')
+        ax.set_title('aca otras cosas')
+        sns.set_style("darkgrid")
+        ax.plot([ultimo_tau, ultimo_tau], [-1, len(ips)], "r--")
+        box = ax.get_position()
+        ax.set_position([0.17, box.y0, box.width + 0.02, box.height])
+        plt.show()
+
 def promediarRtts(lista):
     listaOrdenada = np.sort(np.array(lista))
     listaOrdenada = np.delete(listaOrdenada, [0, listaOrdenada.shape[0]-1])
@@ -98,13 +165,17 @@ def main():
         print "    python graficadores.py ARCHIVO_DE_ENTRADA TIPO_GRAFICO"
         print "TIPOS:"
         print "    1. RTT entre saltos"
+        print "    2. RTT entre saltos VS desviacion y tau"
+        print "    3. RTT entre saltos VS desviacion y tau RECURSIVO"
         return
 
     graph = graficador(sys.argv[1])
     if sys.argv[2] == '1':
         graph.gRttEntraSaltos()
-    else:
+    elif sys.argv[2] == '2':
         graph.gRttVsCimbala()
+    elif sys.argv[2] == '3':
+        graph.gRttVsCimbalaRecursivo()
 
 if __name__ == "__main__":
     main()
