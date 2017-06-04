@@ -134,24 +134,32 @@ class graficador():
 
         ips = []
         values = []
+        colors = []
         for host in self.route:
+            # guardo ip
             ips.append(host['ip'])
+            # seteo color (si es negativo o positivo)
+            if host['rtt_salto'] < 0:
+                colors.append('#8fb2de')
+            else:
+                colors.append('#1c59a5')
+            # guardo valor
             if host['es_salto']:
                 values.append(host['valor'])
             else:
                 values.append(abs(host['rtt_salto'] - promedio) / std)
 
         fig, ax = plt.subplots()
-        ax.barh(np.arange(len(ips)), values, align='center')
+        ax.barh(np.arange(len(ips)), values, align='center', color=colors)
         ax.set_yticks(np.arange(len(ips)))
-        ax.set_yticklabels(ips)
+        ax.set_yticklabels(ips, fontsize=17)
         ax.invert_yaxis()
-        ax.set_xlabel('Pone aca algo copado')
-        ax.set_title('aca otras cosas')
+        ax.set_xlabel('Pone aca algo copado', fontsize=14)
+        ax.set_title('aca otras cosas', fontsize=15)
         sns.set_style("darkgrid")
         ax.plot([ultimo_tau, ultimo_tau], [-1, len(ips)], "r--")
         box = ax.get_position()
-        ax.set_position([0.17, box.y0, box.width + 0.02, box.height])
+        ax.set_position([0.25, box.y0, box.width - 0.05, box.height])
         plt.show()
 
 def promediarRtts(lista):
