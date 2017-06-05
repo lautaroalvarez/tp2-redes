@@ -1,4 +1,6 @@
 import sys, csv
+import matplotlib.patches as mpatches
+import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -137,30 +139,37 @@ class graficador():
         values = []
         colors = []
         for host in self.route:
-            # guardo ip
-            ips.append(host['ip'])
-            # seteo color (si es negativo o positivo)
-            if host['rtt_salto'] < 0:
-                colors.append('#8fb2de')
-            else:
-                colors.append('#1c59a5')
-            # guardo valor
-            if host['es_salto']:
-                values.append(host['valor'])
-            else:
-                values.append(abs(host['rtt_salto'] - promedio) / std)
+            # evito graficar el ttl=1 que es muy grande
+            if host['ttl'] != 1:
+                # guardo ip
+                ips.append(host['ip'] + " [ttl: " + str(host['ttl']) + "]")
+                # seteo color (si es negativo o positivo)
+                if host['rtt_salto'] < 0:
+                    colors.append('#8fb2de')
+                else:
+                    colors.append('#1c59a5')
+                # guardo valor
+                if host['es_salto']:
+                    values.append(host['valor'])
+                else:
+                    values.append(abs(host['rtt_salto'] - promedio) / std)
 
         fig, ax = plt.subplots()
         ax.barh(np.arange(len(ips)), values, align='center', color=colors)
         ax.set_yticks(np.arange(len(ips)))
         ax.set_yticklabels(ips, fontsize=17)
         ax.invert_yaxis()
-        ax.set_xlabel('Pone aca algo copado', fontsize=14)
-        ax.set_title('aca otras cosas', fontsize=15)
+        ax.set_title('z-RTT vs Thompson modificada tau', fontsize=15)
+        ax.set_xlabel('z-RTT: (RTT * promedio) / std', fontsize=14)
         sns.set_style("darkgrid")
-        ax.plot([ultimo_tau, ultimo_tau], [-1, len(ips)], "r--")
+        line = ax.plot([ultimo_tau, ultimo_tau], [-1, len(ips)], "r--")
         box = ax.get_position()
-        ax.set_position([0.25, box.y0, box.width - 0.05, box.height])
+        ax.set_position([0.35, box.y0, box.width - 0.15, box.height])
+
+        line_patch = mlines.Line2D([], [], color='red', linestyle="--", label='Tau ultima iteracion')
+        neg_patch = mpatches.Patch(color='#8fb2de', label='Nodos con TTL negativo')
+        pos_patch = mpatches.Patch(color='#1c59a5', label='Nodos con TTL positivo')
+        plt.legend(handles=[line_patch, neg_patch, pos_patch], loc='upper right', frameon=True)
         plt.show()
 
 def promediarRtts(lista):
