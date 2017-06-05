@@ -128,7 +128,8 @@ class graficador():
                 ultimo_tau = LISTA_TAU[len(rtts)]
                 if value > ultimo_tau:
                     self.route[i]['valor'] = value
-                    self.route[i]['es_salto'] = True
+                    if i > 0:
+                        self.route[i]['es_salto'] = True
                     rtts.pop()
                     hay_outlier = True
 

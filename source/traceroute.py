@@ -218,13 +218,14 @@ class traceroute():
             # tomamos el rtt mas alto (candidato)
             candidato = rtts[-1]
             # recorre los nodos y verifica si son outliers
-            i = 1 
+            i = 0
             while i < len(self.route) and self.route[i]['ip'] != candidato[0]:
                 i += 1
             if i < len(self.route):
                 value = abs(self.route[i]['rtt_salto'] - promedio) / std
                 if value > LISTA_TAU[len(rtts)]:
-                    self.route[i]['es_salto'] = True
+                    if self.route[i]['ttl'] != '1':
+                        self.route[i]['es_salto'] = True
                     rtts.pop()
                     hay_outlier = True
 
